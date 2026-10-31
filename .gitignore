@@ -1,0 +1,11 @@
+# Node
+node_modules/
+dist/
+
+# Tauri / Rust
+src-tauri/target/
+
+# Logs & OS junk
+*.log
+Thumbs.db
+.DS_Store
