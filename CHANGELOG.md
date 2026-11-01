@@ -7,6 +7,7 @@ All notable changes to Git Account Switcher are documented here.
 ### Fixed
 
 - Git credential slot and per-account credential entries now store the account's **username and identity** alongside the token — Credential Manager entries are self-describing, and a stale username-less entry can no longer masquerade as "in sync" while git authenticates as a different account
+- NSIS installer now shows the app's orange G icon instead of the default Tauri icon
 
 ## [0.1.0] - 2026-10-31
 
