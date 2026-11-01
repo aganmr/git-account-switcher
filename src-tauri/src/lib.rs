@@ -337,7 +337,7 @@ fn gcm_delete_token(target: &str) {
 /* ------------------------------------------------------------------ */
 /* Account storage (app config dir)                                    */
 /*                                                                     */
-/* accounts.json = `GAS1` + DPAPI-encrypted pretty JSON.               */
+/* accounts.json = `GAS1` + AES-256-GCM-encrypted pretty JSON.         */
 /* Legacy plaintext JSON is migrated once on load: tokens move to      */
 /* per-account Credential Manager entries and the file is re-encrypted */
 /* ------------------------------------------------------------------ */
@@ -1556,6 +1556,17 @@ async fn app_data_path(app: AppHandle) -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
+/// Open a URL in the user's default browser (`cmd /C start` — the same
+/// mechanism the gh device page uses).
+#[tauri::command]
+async fn open_external(url: String) -> Result<(), String> {
+    std_new_cmd("cmd")
+        .args(["/C", "start", "", &url])
+        .output()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /* --- CLI tools (gh / glab): check & install --- */
 
 #[derive(Serialize, Clone)]
@@ -1803,7 +1814,7 @@ async fn import_accounts(app: AppHandle) -> Result<u32, String> {
             .ok_or_else(|| "cancelled".to_string())?;
         let bytes = fs::read(&path).map_err(|e| e.to_string())?;
 
-        // Accept both the new GAS1+DPAPI format and legacy plaintext JSON.
+        // Accept both the GAS1+AES-256-GCM format and legacy plaintext JSON.
         let json = if bytes.starts_with(FILE_MAGIC) {
             String::from_utf8(decrypt_payload(&bytes[FILE_MAGIC.len()..]).ok_or_else(
                 || "could not decrypt file (invalid or corrupted export)".to_string(),
@@ -1864,7 +1875,7 @@ mod tests {
 
     #[test]
     fn payload_rejects_garbage() {
-        // A DPAPI-era (or corrupted) payload must not decrypt to valid data.
+        // A non-GAS1 (or corrupted) payload must not decrypt to valid data.
         assert!(decrypt_payload(&[0u8; 64]).is_none());
         assert!(decrypt_payload(&[]).is_none());
     }
@@ -1947,6 +1958,7 @@ pub fn run() {
             get_settings,
             set_settings,
             app_data_path,
+            open_external,
             check_cli_tools,
             install_cli_tool,
             export_accounts,

@@ -24,6 +24,7 @@ import {
   checkCliTools,
   installCliTool,
 } from "./api";
+import { openInBrowser } from "./tauri";
 import type {
   Account,
   CliToolsStatus,
@@ -261,11 +262,10 @@ export default function App() {
       const msg = String(e);
       if (msg.includes("winget not found")) {
         // No winget: fall back to the official download page.
-        window.open(
+        void openInBrowser(
           which === "gh"
             ? "https://cli.github.com/"
             : "https://gitlab.com/gitlab-org/cli",
-          "_blank",
         );
       } else {
         showAlert("Install failed", msg);

@@ -1,3 +1,4 @@
+import { openInBrowser } from "../tauri";
 import type { CliToolsStatus, Settings } from "../types";
 
 interface Props {
@@ -65,7 +66,12 @@ export function SettingsModal({
               <div className="by">by Mark Agan</div>
               <div className="ver">Version 0.1.1 · Windows</div>
             </div>
-            <button className="btn primary" onClick={() => window.open(REPORT_URL)}>
+            <button
+              className="btn primary"
+              onClick={() => {
+                void openInBrowser(REPORT_URL);
+              }}
+            >
               Report an issue
             </button>
           </div>
