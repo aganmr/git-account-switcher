@@ -27,7 +27,9 @@ Built with [Tauri 2](https://tauri.app) + React.
 | GitLab | ✅ Token | token switch, `glab` CLI sync — browser auto-login via `glab` is planned (see below) |
 | Gitea / Forgejo | ✅ Token | token switch |
 | Gitee | ✅ Token | token switch |
+| Azure DevOps | 🚧 Future | PAT-based — the org goes in the host field; no CLI sync, no browser login (PATs are created on the website) |
 | Bitbucket & others | 🚧 Future | may be supported in a future update |
+| AWS CodeCommit | ❌ Not planned | no token API — auth goes through AWS SSO / `git-credential-helper`, so there is no token for the app to switch |
 
 ## Future updates
 
@@ -44,7 +46,7 @@ Download the latest **NSIS installer** (`.exe`) from the [Releases](https://gith
 
 ## Security notes
 
-- Account metadata is stored in a **DPAPI-encrypted** `accounts.json` in the app data folder — readable only by your Windows user account on this machine (the path is shown in Settings)
+- Account metadata is stored in an **AES-256-GCM-encrypted** `accounts.json` in the app data folder (the path is shown in Settings) — the file holds no tokens
 - Tokens live in the **Windows Credential Manager** — one entry per account, tagged with the account's username and identity, also protected per-user by the OS
 - Switching writes the active account's identity + token to the git credential slot (`git:https://{host}`), the standard location git itself reads from
 - Nothing is uploaded anywhere; all operations are local
