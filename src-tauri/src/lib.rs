@@ -229,7 +229,21 @@ fn cred_target(provider: &Provider, host: &str, login: &str) -> String {
 
 const MAX_CRED_BLOB: usize = 2560; // Windows Credential Manager blob limit
 
-fn gcm_write_token(target: &str, token: &str) -> Result<(), String> {
+/// Display identity stored with credential entries: `Name <email>`.
+fn cred_identity(name: &str, email: &str) -> String {
+    if email.is_empty() {
+        name.to_string()
+    } else {
+        format!("{name} <{email}>")
+    }
+}
+
+fn gcm_write_token(
+    target: &str,
+    login: &str,
+    identity: &str,
+    token: &str,
+) -> Result<(), String> {
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Security::Credentials::{
@@ -246,11 +260,21 @@ fn gcm_write_token(target: &str, token: &str) -> Result<(), String> {
         .encode_wide()
         .chain(std::iter::once(0))
         .collect();
+    let login_w: Vec<u16> = OsStr::new(login)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let identity_w: Vec<u16> = OsStr::new(identity)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
     let blob: Vec<u8> = token.as_bytes().to_vec();
 
     let mut cred: CREDENTIALW = unsafe { std::mem::zeroed() };
     cred.Type = CRED_TYPE_GENERIC;
     cred.TargetName = target_w.as_ptr() as *mut u16;
+    cred.UserName = login_w.as_ptr() as *mut u16;
+    cred.Comment = identity_w.as_ptr() as *mut u16;
     cred.CredentialBlobSize = blob.len() as u32;
     cred.CredentialBlob = blob.as_ptr() as *mut u8;
     cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
@@ -377,7 +401,11 @@ fn load_accounts(app: &AppHandle) -> Vec<Account> {
         let mut stored = gcm_read_token(&target).is_some();
         if let Some(t) = &r.token {
             let t = t.trim();
-            if !t.is_empty() && !stored && gcm_write_token(&target, t).is_ok() {
+            if !t.is_empty()
+                && !stored
+                && gcm_write_token(&target, &r.login, &cred_identity(&r.name, &r.email), t)
+                    .is_ok()
+            {
                 stored = true;
             }
         }
@@ -558,12 +586,18 @@ fn cred_manager_token(host: &str) -> Option<String> {
     token
 }
 
-/// Write the token into the GCM `git:https://{host}` slot directly.
-/// `git credential approve` silently no-ops for known hosts (github.com)
-/// in the built-in GCM, so the app writes the credential itself. The
-/// existing entry's attributes (GCM markers) and persist scope are
-/// preserved; the blob is the bare token, matching what GCM stores.
-fn update_git_slot(host: &str, token: &str) -> Result<(), String> {
+/// Write the active account's username, identity, and token into the GCM
+/// `git:https://{host}` slot directly. `git credential approve` silently
+/// no-ops for known hosts (github.com) in the built-in GCM, so the app
+/// writes the credential itself. The existing entry's attributes (GCM
+/// markers) and persist scope are preserved; the blob is the bare token,
+/// matching what GCM stores.
+fn update_git_slot(
+    host: &str,
+    login: &str,
+    identity: &str,
+    token: &str,
+) -> Result<(), String> {
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Security::Credentials::{
@@ -571,6 +605,14 @@ fn update_git_slot(host: &str, token: &str) -> Result<(), String> {
     };
 
     let target: Vec<u16> = OsStr::new(&format!("git:https://{host}"))
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let login_w: Vec<u16> = OsStr::new(login)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let identity_w: Vec<u16> = OsStr::new(identity)
         .encode_wide()
         .chain(std::iter::once(0))
         .collect();
@@ -582,6 +624,8 @@ fn update_git_slot(host: &str, token: &str) -> Result<(), String> {
     let mut cred: CREDENTIALW = unsafe { std::mem::zeroed() };
     cred.Type = 1; // CRED_GENERIC
     cred.TargetName = target.as_ptr() as *mut _;
+    cred.UserName = login_w.as_ptr() as *mut _;
+    cred.Comment = identity_w.as_ptr() as *mut _;
     cred.CredentialBlob = blob.as_ptr() as *mut _;
     cred.CredentialBlobSize = blob.len() as u32;
     if have {
@@ -589,7 +633,6 @@ fn update_git_slot(host: &str, token: &str) -> Result<(), String> {
         cred.Persist = e.Persist;
         cred.AttributeCount = e.AttributeCount;
         cred.Attributes = e.Attributes;
-        cred.UserName = e.UserName;
     } else {
         cred.Persist = 2; // LOCAL_MACHINE
     }
@@ -748,7 +791,13 @@ async fn auto_sync_token(account: &Account) -> bool {
             continue; // offline or dead token: try the next candidate
         };
         if login.eq_ignore_ascii_case(&account.login) {
-            return gcm_write_token(&target, cand).is_ok();
+            return gcm_write_token(
+                &target,
+                &account.login,
+                &cred_identity(&account.name, &account.email),
+                cand,
+            )
+            .is_ok();
         }
     }
     false
@@ -841,7 +890,7 @@ async fn save_account(
     let target = cred_target(&acc.provider, &host, &acc.login);
 
     if let Some(t) = token.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
-        gcm_write_token(&target, t)?;
+        gcm_write_token(&target, &acc.login, &cred_identity(&acc.name, &acc.email), t)?;
     }
     if gcm_read_token(&target).is_none() {
         // No token given: try to pick one up (git slot / CLI session)
@@ -902,7 +951,7 @@ async fn import_saved_credentials(app: AppHandle) -> Result<Vec<Account>, String
         let (_, email) = run_cmd("git", &["config", "--global", "user.email"]).await;
 
         let target = cred_target(&provider, host, &login);
-        let _ = gcm_write_token(&target, &token);
+        let _ = gcm_write_token(&target, &login, &cred_identity(&name, &email), &token);
 
         let account = Account {
             id: uuid::Uuid::new_v4().to_string(),
@@ -1151,7 +1200,12 @@ async fn perform_switch(
 
     // --- Git token (the GCM `git:https://{host}` slot, written directly) ---
     match token_ref {
-        Some(t) => match update_git_slot(host, t) {
+        Some(t) => match update_git_slot(
+            host,
+            &account.login,
+            &cred_identity(&account.name, &account.email),
+            t,
+        ) {
             Ok(()) => results.push(SwitchResult {
                 system: "token".into(),
                 ok: true,
@@ -1454,8 +1508,13 @@ async fn switch_account_browser(
             account.login
         ));
     }
-    gcm_write_token(&target, &token)
-        .map_err(|e| format!("failed to store the token: {e}"))?;
+    gcm_write_token(
+        &target,
+        &account.login,
+        &cred_identity(&account.name, &account.email),
+        &token,
+    )
+    .map_err(|e| format!("failed to store the token: {e}"))?;
 
     Ok(perform_switch(&app, &account, &token, &host).await)
 }
