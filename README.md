@@ -44,8 +44,9 @@ Download the latest **NSIS installer** (`.exe`) from the [Releases](https://gith
 
 ## Security notes
 
-- Account data (including tokens) is stored in a **DPAPI-encrypted** `accounts.json` in the app data folder — readable only by your Windows user account on this machine (the path is shown in Settings)
-- Switching writes the active token to the Windows Credential Manager git slot, the standard location git itself reads from
+- Account metadata is stored in a **DPAPI-encrypted** `accounts.json` in the app data folder — readable only by your Windows user account on this machine (the path is shown in Settings)
+- Tokens live in the **Windows Credential Manager** — one entry per account, tagged with the account's username and identity, also protected per-user by the OS
+- Switching writes the active account's identity + token to the git credential slot (`git:https://{host}`), the standard location git itself reads from
 - Nothing is uploaded anywhere; all operations are local
 
 ## Build from source
