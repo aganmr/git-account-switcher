@@ -64,7 +64,7 @@ export function SettingsModal({
             <div>
               <div className="nm">Git Account Switcher</div>
               <div className="by">by Mark Agan</div>
-              <div className="ver">Version 0.1.1 · Windows</div>
+              <div className="ver">Version 0.1.2 · Windows</div>
             </div>
             <button
               className="btn primary"

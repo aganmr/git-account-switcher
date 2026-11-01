@@ -2,6 +2,16 @@
 
 All notable changes to Git Account Switcher are documented here.
 
+## [0.1.2] - 2026-11-01
+
+### Fixed
+
+- "Report an issue" (and the CLI download fallback links) now open in the default web browser
+
+### Changed
+
+- README: corrected the `accounts.json` encryption description (AES-256-GCM, not DPAPI); provider table now lists AWS CodeCommit (not planned) and Azure DevOps (future)
+
 ## [0.1.1] - 2026-11-01
 
 ### Fixed
