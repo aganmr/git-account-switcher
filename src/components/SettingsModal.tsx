@@ -4,6 +4,7 @@ import type { CliToolsStatus, Settings } from "../types";
 interface Props {
   settings: Settings;
   dataPath: string;
+  cliPath: string;
   busy: "export" | "import" | "reimport" | null;
   cli: CliToolsStatus | null;
   cliBusy: "gh" | "glab" | null;
@@ -20,6 +21,7 @@ interface Props {
 export function SettingsModal({
   settings,
   dataPath,
+  cliPath,
   busy,
   cli,
   cliBusy,
@@ -64,7 +66,7 @@ export function SettingsModal({
             <div>
               <div className="nm">Git Account Switcher</div>
               <div className="by">by Mark Agan</div>
-              <div className="ver">Version 0.1.2 · Windows</div>
+              <div className="ver">Version 0.2.0 · Windows</div>
             </div>
             <button
               className="btn primary"
@@ -143,6 +145,17 @@ export function SettingsModal({
               </div>
             );
           })}
+
+          <div className="set-sect">gas-cli (command line)</div>
+          <div className="set-row">
+            <div>
+              <div className="lbl">gas-cli.exe</div>
+              <div className="hint">
+                Switch accounts from the terminal — for scripts and AI agents
+              </div>
+            </div>
+          </div>
+          <div className="pathline">{cliPath}</div>
 
           <div className="set-sect">Data</div>
           <div className="set-row">

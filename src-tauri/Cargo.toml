@@ -1,8 +1,11 @@
 [package]
 name = "git-account-switcher"
-version = "0.1.2"
-description = "Switch between GitHub accounts"
+version = "0.2.0"
+description = "One-click git account switching for Windows — identity, tokens, gh/glab, and SSH keys all switch together"
 edition = "2021"
+# The crate builds two binaries (the app + gas-cli); Tauri needs to know
+# which one is the app.
+default-run = "git-account-switcher"
 
 [lib]
 name = "git_account_switcher_lib"

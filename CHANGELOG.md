@@ -2,6 +2,23 @@
 
 All notable changes to Git Account Switcher are documented here.
 
+## [0.2.0] - 2026-11-20
+
+### Added
+
+- **`gas-cli`** — a command-line companion (shipped next to the app in the installer) so scripts and AI agents can switch git accounts:
+  - `gas-cli status` — active account + per-system state
+  - `gas-cli list` — all saved accounts (live token check)
+  - `gas-cli switch <account>` — full machine-wide switch (label, login, or unique prefix)
+  - `--json` on every command; exit codes `0` ok / `1` failed / `2` usage; tokens always masked
+  - No browser flow in v1: when a switch would need one, the CLI exits `1` with `"needsBrowser": true`
+- Settings: the `gas-cli.exe` path is shown in the Settings dialog
+
+### Changed
+
+- The Tauri-free engine (storage, credentials, token resolution, switch) now lives in a shared `core` module used by both the app and the CLI
+- `accounts.json` and `settings.json` are now written atomically (temp file + rename), so a crash mid-write can no longer corrupt them
+
 ## [0.1.2] - 2026-11-01
 
 ### Fixed

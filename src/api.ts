@@ -217,6 +217,12 @@ export async function appDataPath(): Promise<string> {
   return "%APPDATA%\\com.markaiserver.gitaccountswitcher";
 }
 
+/** Path of the gas-cli binary that ships next to the app exe. */
+export async function gasCliPath(): Promise<string> {
+  if (isTauri()) return invoke<string>("cli_path");
+  return "gas-cli.exe";
+}
+
 /* --- Export / Import (rfd dialogs; unavailable in browser dev mode) --- */
 
 export async function exportAccounts(): Promise<string> {

@@ -1,11 +1,12 @@
 {
   "name": "git-account-switcher",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:cli": "node scripts/build-cli.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },

@@ -17,6 +17,7 @@ Built with [Tauri 2](https://tauri.app) + React.
 - **Import existing credentials** — picks up git credentials already saved on your machine
 - **Export / import account set** — move your accounts between machines as a single file
 - **Per-provider status** — live view of git identity, stored token, CLI login, and SSH key, each marked in sync / out of sync
+- **`gas-cli`** — command-line companion so scripts and AI agents can switch accounts (see [CLI](#cli-gas-cli))
 - Launch at startup, close to tray, in-app dialogs (no native prompts)
 
 ## Supported providers
@@ -31,11 +32,25 @@ Built with [Tauri 2](https://tauri.app) + React.
 | Bitbucket & others | 🚧 Future | may be supported in a future update |
 | AWS CodeCommit | ❌ Not planned | no token API — auth goes through AWS SSO / `git-credential-helper`, so there is no token for the app to switch |
 
+## CLI (gas-cli)
+
+The installer ships `gas-cli.exe` next to the app (the path is shown in Settings). It is a command-line interface for switching accounts, designed for scripts and AI agents:
+
+```powershell
+gas-cli status             # active account + per-system state
+gas-cli list               # all saved accounts
+gas-cli switch <account>   # switch to a saved account
+```
+
+`<account>` is a label, a login, or a unique prefix of either. Add `--json` to any command for machine-readable output. Exit codes: `0` = ok, `1` = operation failed, `2` = usage error.
+
+- Tokens are always masked in the output
+- The CLI has **no browser flow**: when a switch would need one (no token available, or `gh` rejecting the stored token), `gas-cli` exits `1` with `"needsBrowser": true` — finish the re-authentication in the app, then re-run
+
 ## Future updates
 
 - **GitLab browser auto-login** via `glab` (the same tokenless flow GitHub already has)
 - **Version checker / auto-update** — notice when a new release is available
-- **CLI for AI agents** — a command-line interface that lets AI agents (and scripts) switch git accounts autonomously
 
 ## Install
 

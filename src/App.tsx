@@ -16,6 +16,7 @@ import {
   getSettings,
   setSettings as persistSettings,
   appDataPath,
+  gasCliPath,
   exportAccounts,
   importAccounts,
   isAutostartEnabled,
@@ -85,6 +86,7 @@ export default function App() {
     launchAtStartup: false,
   });
   const [dataPath, setDataPath] = useState("");
+  const [cliPath, setCliPath] = useState("");
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "reimport" | null>(
     null,
   );
@@ -109,11 +111,16 @@ export default function App() {
       }
       await refresh();
       try {
-        const [s, p] = await Promise.all([getSettings(), appDataPath()]);
+        const [s, p, c] = await Promise.all([
+          getSettings(),
+          appDataPath(),
+          gasCliPath(),
+        ]);
         // The real autostart state comes from the OS (registry), not the file.
         const auto = await isAutostartEnabled();
         setSettings({ ...s, launchAtStartup: auto });
         setDataPath(p);
+        setCliPath(c);
       } catch {
         // non-fatal
       }
@@ -381,6 +388,7 @@ export default function App() {
         <SettingsModal
           settings={settings}
           dataPath={dataPath}
+          cliPath={cliPath}
           busy={dataBusy}
           cli={cli}
           cliBusy={cliBusy}

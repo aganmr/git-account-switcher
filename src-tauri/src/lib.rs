@@ -424,6 +424,17 @@ async fn app_data_path(app: AppHandle) -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
+/// Path of the `gas-cli` binary that ships next to the app executable
+/// (shown in Settings).
+#[tauri::command]
+async fn cli_path() -> Result<String, String> {
+    std::env::current_exe()
+        .map_err(|e| e.to_string())?
+        .parent()
+        .map(|p| p.join("gas-cli.exe").to_string_lossy().to_string())
+        .ok_or_else(|| "failed to resolve CLI path".to_string())
+}
+
 /// Open a URL in the user's default browser (`cmd /C start` — the same
 /// mechanism the gh device page uses).
 #[tauri::command]
@@ -640,6 +651,7 @@ pub fn run() {
             get_settings,
             set_settings,
             app_data_path,
+            cli_path,
             open_external,
             check_cli_tools,
             install_cli_tool,

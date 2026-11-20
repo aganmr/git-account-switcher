@@ -4,6 +4,8 @@ dist/
 
 # Tauri / Rust
 src-tauri/target/
+# gas-cli staging dir (bootstrapped by `npm run build:cli`)
+binaries/
 
 # Logs & OS junk
 *.log
